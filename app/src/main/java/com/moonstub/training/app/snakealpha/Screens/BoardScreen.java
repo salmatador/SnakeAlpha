@@ -17,6 +17,7 @@ import java.util.Random;
 
 public class BoardScreen extends GameScreen {
 
+    String[] levelList = {"level_1_01.txt","level_1_02.txt"};
     ImageSection apple;
     ArrayList<ImageSection> snake;
     ArrayList<Section> level;
@@ -25,11 +26,19 @@ public class BoardScreen extends GameScreen {
     boolean forward = true;
     String gameMessage = "";
     float elapsedTime = 0.0f;
+    int winCondition = 7;
+    int levelIndex = 0;
 
 
     public BoardScreen(GameActivity game, ArrayList<Section> levelSection) {
         super(game);
         level = levelSection;
+    }
+
+    private ArrayList<Section> loadLevel(){
+        LoadLevel loadLevel = new LoadLevel(getGameActivity().getGameIO());
+        loadLevel.loadFile(levelList[levelIndex]);
+        return (ArrayList<Section>) loadLevel.parseString(loadLevel.stringLevel);
     }
 
     @Override
@@ -58,6 +67,8 @@ public class BoardScreen extends GameScreen {
 
             ArrayList<TouchEvent.TouchEvents> events = (ArrayList<TouchEvent.TouchEvents>) getGameActivity().getGameInput().getTouchEvents();
             switch (mGameState) {
+                case INIT:
+                    break;
                 case GAME_OVER:
                     updateGameOver(events);
                     break;
@@ -74,9 +85,15 @@ public class BoardScreen extends GameScreen {
                 case RESUME:
                     break;
                 case NEXT:
+                    updateNext();
                     break;
             }
         }
+    }
+
+    private void updateNext() {
+        levelIndex++;
+        getGameActivity().setCurrentScreen(new BoardScreen(getGameActivity(), loadLevel()));
     }
 
     private void updateGameOver(ArrayList<TouchEvent.TouchEvents> events) {
@@ -88,6 +105,9 @@ public class BoardScreen extends GameScreen {
     }
 
     private void updateRunning(float delta, ArrayList<TouchEvent.TouchEvents> events) {
+        if(snake.size() > winCondition){
+            mGameState = GameState.NEXT;
+        }
         int eventSize = events.size();
 
         if (eventSize > 0) {
